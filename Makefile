@@ -1,8 +1,10 @@
 CC=clang
 LIB=-lz -llzo2 -lucl
 
-default: dumpifs uuu
+default: dumpifs uuu zzz
 
+zzz:
+	${CC} zzz.c -o zzz ${LIB}
 uuu:
 	${CC} uuu.c -o uuu ${LIB}
 
@@ -11,3 +13,4 @@ dumpifs: dumpifs.c
 clean:
 	rm dumpifs
 	rm uuu
+	rm zzz

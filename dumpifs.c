@@ -556,6 +556,7 @@ void process(const char *file, FILE *fp) {
 						error(1,"decompression init failure");
 						return;
 					}
+					printf("Decompress @0x%0lx\n", ftell(fp));
 					for(;;) {
 						len = getc(fp) << 8;
 						len += getc(fp);

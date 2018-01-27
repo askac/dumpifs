@@ -17,7 +17,7 @@
 
 #define _DISABLE_MD5_
 
-#define min(a,b)	((a)>=(b)?(a):(b))
+#define min(a,b)	((a)<=(b)?(a):(b))
 
 #ifdef __USAGE
 %C - dump an image file system
@@ -334,7 +334,7 @@ void display_script(FILE *fp, int pos, int len) {
 		}
 
 		if(size > sizeof *hdr) {
-			int							n = min(sizeof buff, size - sizeof *hdr);
+			int n = min(sizeof buff, size - sizeof *hdr);
 
 			if(fread(hdr + 1, n, 1, fp) != 1) {
 				break;
@@ -926,6 +926,7 @@ void extract_file(FILE *fp, int ipos, struct image_file *ent) {
 
 	fseek(fp, ipos + ent->offset, SEEK_SET);
 	ftruncate(fileno(dst), ent->size); /* pregrow the dst file */
+	printf("%s ... size %d\n", name, ent->size);
 	if(copy(fp, dst, ent->size) == -1) {
 		unlink(name);
 		error(0, "Unable to create file %s: %s\n", name, strerror(errno));

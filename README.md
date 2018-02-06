@@ -3,7 +3,7 @@ Dirty hack dumpifs.
 Modified to be compiled on most platform without QNX SQP.
 
 For those who are interested in hacking MIB2 firmware.
-The compress tool support ucl compressed image only.
+The compress tool support ucl and lzo compressed images only.
 Use on your own risk.
 
 # Basic Idea

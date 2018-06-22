@@ -43,6 +43,7 @@ Compress method?
 1. ucl
 2. lzo
 EOF
+
 read packuse
 if [ "$packuse" -lt 1 -o "$packuse" -gt 2 ];then
 	echo "Invalid option $packuse"
@@ -57,14 +58,18 @@ if [ $packuse -eq 2 ];then
 	compressUse=$lzotool
 fi
 
-echo "Use compress tool $lzotool"
+echo "Select $packuse . Use compress tool $compressUse"
 
 dd if=$srcIfs of=$dstIfs bs=$offsetH count=1
 dd if=$srcIfs of=$tempBody bs=$offsetH skip=1
-$lzotool $tempBody $tempBody2
+$compressUse $tempBody $tempBody2
+
+echo "Compress using $compressUse done."
 echo "Packing $dstIfs"
 dd of=$dstIfs if=$tempBody2 bs=1 seek=$offsetH
-dd if=/dev/zero of=$dstIfs bs=1 count=9 seek=`du -b $dstIfs | awk '{print($1)}'`
+
+finalSize=`du -b $dstIfs | awk '{print($1)}'`
+dd if=/dev/zero of=$dstIfs bs=1 count=9 seek=$finalSize
 echo "Done"
 rm $tempBody
 rm $tempBody2

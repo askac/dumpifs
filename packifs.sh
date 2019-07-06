@@ -1,7 +1,9 @@
 #!/bin/sh
-ucltool=./uuu
-lzotool=./zzz
+ucltool=`dirname $0`/uuu
+lzotool=`dirname $0`/zzz
 compressUse=$ucltool
+
+fixdecifs=`dirname $0`/fixdecifs
 
 tempBody=__temp__B
 tempBody2=__temp__B2
@@ -58,15 +60,21 @@ if [ $packuse -eq 2 ];then
 	compressUse=$lzotool
 fi
 
+
+echo "Fix checksum of decompressed"
+$fixdecifs $srcIfs Y
+
 echo "Select $packuse . Use compress tool $compressUse"
 
 dd if=$srcIfs of=$dstIfs bs=$offsetH count=1
 dd if=$srcIfs of=$tempBody bs=$offsetH skip=1
 $compressUse $tempBody $tempBody2
 
+
+
 echo "Compress using $compressUse done."
 echo "Packing $dstIfs"
-dd of=$dstIfs if=$tempBody2 bs=1 seek=$offsetH
+dd of=$dstIfs if=$tempBody2 bs=$offsetH seek=1
 
 finalSize=`du -b $dstIfs | awk '{print($1)}'`
 dd if=/dev/zero of=$dstIfs bs=1 count=9 seek=$finalSize

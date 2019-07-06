@@ -122,6 +122,8 @@ void compute_md5(FILE *fp, int ipos, struct image_file *ent, unsigned char md5_r
 
 int zero_ok (struct startup_header *shdr);
 
+static int rifs_checksum(void *ptr, long len);
+
 #if defined(__QNXNTO__) || defined(__SOLARIS__)
 
 // Get basename()
@@ -449,6 +451,8 @@ wait:
 	}
 }
 
+static char* hStart=0;
+
 void process(const char *file, FILE *fp) {
 	struct startup_header		shdr = { STARTUP_HDR_SIGNATURE };
 	int							spos;
@@ -459,6 +463,7 @@ void process(const char *file, FILE *fp) {
 	static char 				out_buf[0x10000];
 
 	spos = -1;
+	hStart = (char*)&shdr.signature;
 	if((ipos = find(fp, (char*)&ihdr.signature, sizeof ihdr.signature, 0)) == -1) {
 		rewind(fp);
 		//find startup signature and verify its validity
@@ -556,15 +561,22 @@ void process(const char *file, FILE *fp) {
 						error(1,"decompression init failure");
 						return;
 					}
-					printf("Decompress @0x%0lx\n", ftell(fp));
+					printf("LZO Decompress @0x%0lx\n", ftell(fp));
 					for(;;) {
-						len = getc(fp) << 8;
-						len += getc(fp);
+						unsigned int nowPtr=ftell(fp);
+						int c1= getc(fp);
+						int c2= getc(fp);
+						len = (c1 << 8);
+						len += c2;
+						//len = getc(fp) << 8;
+						//len += getc(fp);
 						if(len == 0) break;
 						fread(buf, len, 1, fp);
+						printf("lzo1x_decompress(buf, %d...)\n");
 						status = lzo1x_decompress(buf, len, out_buf, &out_len, NULL);
 						if(status != LZO_E_OK) {
 							error(1, "decompression failure");
+							printf("decompression not success with code %d. out_len=%d. c1=%x, c2=%x @0x%x\n", status, out_len, c1, c2, nowPtr);
 							return;
 						}
 						til+=len;tol+=out_len;
@@ -579,7 +591,7 @@ void process(const char *file, FILE *fp) {
 					unsigned	len, til=0, tol=0;
 					ucl_uint	out_len;
 					int			status;
-					printf("Decompress @0x%0lx\n", ftell(fp));
+					printf("UCL Decompress @0x%0lx\n", ftell(fp));
 					for(;;) {
 						len = getc(fp) << 8;
 						len += getc(fp);
@@ -741,6 +753,8 @@ void process(const char *file, FILE *fp) {
 			printf("Checksums: image=%#lx", ENDIAN_RET32(itlr.cksum));
 		else
 			printf("Checksums: image=%#lx", itlr.cksum);
+
+
 		if(spos != -1) {
 			fseek(fp, spos + shdr.startup_size-sizeof(stlr), SEEK_SET);
 			if(fread(&stlr, sizeof(stlr), 1, fp) != 1) {
@@ -754,6 +768,32 @@ void process(const char *file, FILE *fp) {
 				printf(" startup=%#lx", stlr.cksum);
 		}
 		printf("\n");
+		//printf("ipos=%#lx spos=%#lx ihdr.image_size=%#ld - sizeof(stlr) = %#ld\n", ipos, spos, ihdr.image_size, ihdr.image_size-sizeof(itlr));
+		{
+		    int             data;
+			int             sum;
+			int		counted=0;
+			int len = ihdr.image_size;
+			unsigned        max;
+
+			fseek(fp, ipos , SEEK_SET);
+			sum = 0;
+			while(len > 4)
+			{
+				fread(&data, 4, 1, fp);
+				sum += data;
+				counted +=4;
+				len -= 4;
+			}
+			sum = -1*sum;
+			if(0 != (itlr.cksum - sum))
+			{
+				printf("\nStored checksum not correct!\n");
+				printf("Expected checksum: %#lx\n", sum);
+				printf("  NG: %02x %02x %02x %02x\n", itlr.cksum & 0xff, (itlr.cksum >> 8) & 0xff, (itlr.cksum >> 16) & 0xff, (itlr.cksum >> 24) & 0xff);
+				printf("GOOD: %02x %02x %02x %02x\n", sum & 0xff, (sum >> 8) & 0xff, (sum >> 16) & 0xff, (sum >> 24) & 0xff);
+			}
+        }
 	}
 }
 
@@ -1250,6 +1290,33 @@ void compute_md5(
 	MD5Final(md5_result, &md5_ctx);
 	#endif
 }
+
+// Calculate the sum of an array of 4byte numbers
+static int rifs_checksum(void *ptr, long len)
+{
+	int			*data = (int *)ptr;
+	int 		sum;
+	unsigned	max;
+
+	// The checksum may take a while for large images, so we want to poll the mini-driver
+	max=len;//max = (lsp.mdriver.size > 0) ? mdriver_cksum_max : len;
+	
+	sum = 0;
+	while(len > 0)
+	{
+		sum += *data++;
+		len -= 4;
+		/*mdriver_count += 4;
+		if(mdriver_count >= max) 
+		{
+			// Poll the mini-driver when we reach the limit
+			mdriver_check();
+			mdriver_count = 0;	
+		}*/
+	}
+	return(sum);
+}
+
 
 #ifdef __QNXNTO__
 __SRCVERSION("dumpifs.c $Rev: 207305 $");

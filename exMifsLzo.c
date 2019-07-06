@@ -24,9 +24,9 @@ int main(int argc, char **argv)
 	char buffer[0x200];
 	unsigned int total=0;
 
-	if(3 != argc)
+	if(3 > argc)
 	{
-		printf("Usage %s <src lzo> <dest>\n", argv[0]);
+		printf("Usage %s <src lzo> <dest> [offset]\n", argv[0]);
 		return 0;   
 	}
 
@@ -34,17 +34,20 @@ int main(int argc, char **argv)
 	fpOut = fopen(argv[2], "w+");
 	if(fp){
 		int blockSize;
-		int totalSize;
+		unsigned int totalSize;
 		int v2 = 0, maxBlkSize;
 		int inputPtr = (int) fp;
 		int nextImgPtr = (int)buffer;
 		int v7 = 0;
-		int v8 = 2048;                        // Start offset of real content
+		int StartOffset = 0x800;                        // Start offset of real content
 		unsigned int v10[6];
 		int *origImgStart = (int*)buffer;
 		int contentOffset;
 		int *pRead;
 		BLOCKINFO **readBlk;
+		
+		if(4 == argc)
+			StartOffset=atoi(argv[3]);
 
 		fread(buffer, 1, sizeof(buffer), fp);
 		pRead = buffer;
@@ -53,7 +56,7 @@ int main(int argc, char **argv)
 		printf("Buffer @0x%X\n", (unsigned int)buffer);
 		contentOffset = *((unsigned int *)buffer + 1);
 		totalSize = *((unsigned int *)buffer + 2);
-		printf("contentOffset=0x%x @ 0x%X  %d blocks. totalSize=%d(%x) @ 0x%X\n", contentOffset, (unsigned int *)buffer + 1, totalSize, totalSize, (unsigned int *)buffer + 2);
+		printf("contentOffset=0x%x @ 0x%X  %d blocks. totalSize=%d(%x) @ 0x%X\n", contentOffset, (unsigned int *)buffer + 1, (unsigned int) totalSize, (unsigned int) totalSize, (unsigned int *)buffer + 2);
 		for(pRead = (int*)&buffer[8];pRead < (buffer+sizeof(buffer));pRead++)
 		{
 			int gap, unitSize;
@@ -61,7 +64,7 @@ int main(int argc, char **argv)
 			if(0 == *pRead) break;
 			v2++;
 			unitSize = ((0x200 - (*pRead & 0x1ff)) + *pRead);
-			blk->offset = v7 + 0x800;
+			blk->offset = v7 + StartOffset;
 			blk->size = *pRead;
 			//printf("%d, unitSize=0x%x, offset=0x%x\n", *pRead, unitSize, v7 + 2048);
 			addBlockInfo(blk);

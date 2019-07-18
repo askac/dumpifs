@@ -498,6 +498,9 @@ void process(const char *file, FILE *fp) {
 				break;
 			}
 		}
+		printf("Image startup_size: %d (0x%x)\n", shdr.startup_size, shdr.startup_size);
+		printf("Image stored_size: %d (0x%x)\n", shdr.stored_size, shdr.stored_size);
+		printf("Compressed size: %d (0x%x)\n", shdr.stored_size - shdr.startup_size - sizeof(struct image_trailer), shdr.stored_size - shdr.startup_size - sizeof(struct image_trailer));
 
 		// If the image is compressed we need to uncompress it into a
 		// tempfile and restart.
@@ -580,7 +583,7 @@ void process(const char *file, FILE *fp) {
 							return;
 						}
 						til+=len;tol+=out_len;
-						printf("LZO Decompress rd=%d, wr=%d\n", len, out_len);
+						printf("LZO Decompress rd=%d, wr=%d @ 0x%x\n", len, out_len, nowPtr);
 						fwrite(out_buf, out_len, 1, fp2);
 					}
 					printf("Decompressed %d bytes-> %d bytes\n", til, tol);
@@ -593,6 +596,7 @@ void process(const char *file, FILE *fp) {
 					int			status;
 					printf("UCL Decompress @0x%0lx\n", ftell(fp));
 					for(;;) {
+						unsigned int nowPtr = ftell(fp);
 						len = getc(fp) << 8;
 						len += getc(fp);
 						if(len == 0) break;
@@ -603,7 +607,7 @@ void process(const char *file, FILE *fp) {
 							return;
 						}
 						til+=len;tol+=out_len;
-						printf("UCL Decompress rd=%d (0x%x), wr=%d\n", len, len, out_len);
+						printf("UCL Decompress rd=%d (0x%x), wr=%d @ 0x%x\n", len, len, out_len, nowPtr);
 						fwrite(out_buf, out_len, 1, fp2);
 					}
 					printf("Decompressed %d bytes-> %d bytes\n", til, tol);
@@ -793,7 +797,11 @@ void process(const char *file, FILE *fp) {
 				printf("  NG: %02x %02x %02x %02x\n", itlr.cksum & 0xff, (itlr.cksum >> 8) & 0xff, (itlr.cksum >> 16) & 0xff, (itlr.cksum >> 24) & 0xff);
 				printf("GOOD: %02x %02x %02x %02x\n", sum & 0xff, (sum >> 8) & 0xff, (sum >> 16) & 0xff, (sum >> 24) & 0xff);
 			}
-        }
+		}
+		printf("Image startup_size: %d (0x%x)\n", shdr.startup_size, shdr.startup_size);
+		printf("Image stored_size: %d (0x%x)\n", shdr.stored_size, shdr.stored_size);
+		printf("Compressed size: %d (0x%x)\n", shdr.stored_size - shdr.startup_size - sizeof(itlr), shdr.stored_size - shdr.startup_size - sizeof(itlr));
+
 	}
 }
 
@@ -998,12 +1006,12 @@ void extract_file(FILE *fp, int ipos, struct image_file *ent) {
 			processing_done = 1;
 		}
 	}
-
+/*
 	if(mkdir_p(dirname(ent->path))) {
 		printf("unable to mkdir -p for %s\n", name);
 		return;
 	}
-
+*/
 	if(!(dst = fopen(name, "wb"))) {
 		error(0, "Unable to open %s: %s\n", name, strerror(errno));
 	}

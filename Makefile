@@ -7,6 +7,8 @@ zzz:
 	${CC} zzz.c -o zzz ${LIB}
 uuu:
 	${CC} uuu.c -o uuu ${LIB}
+#lz4dict:
+#	${CC} lz4dict.c -o lz4dict ${LIB}
 exMifsLzo:
 	${CC} exMifsLzo.c -o  exMifsLzo ${LIB}
 exMifsLz4:
@@ -18,6 +20,7 @@ fixencifs: fixencifs.c
 dumpifs: dumpifs.c
 	${CC} dumpifs.c -o dumpifs ${LIB}
 clean:
+#	rm lz4dict
 	rm exMifsLzo
 	rm exMifsLz4
 	rm dumpifs

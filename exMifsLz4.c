@@ -9,7 +9,7 @@ typedef struct
 	unsigned int size;
 } BLOCKINFO;
 
-static BLOCKINFO *blockInfo[40];
+static BLOCKINFO *blockInfo[80];
 static BLOCKINFO **currBlockInfo = blockInfo;
 
 static void addBlockInfo(BLOCKINFO *blk)
@@ -76,14 +76,14 @@ int main(int argc, char **argv)
 		}
 		printf("Block count=%d Total Size=%d + 2048=%d (%x)\n", v2, v7, v7+2048, v7+2048);
 		v7=0;maxBlkSize=0;
-		/*if(lzo_init() != LZO_E_OK) {
-			error(1, "decompression init failure");
-			return 0;
-		}*/
+		//if(lzo_init() != LZO_E_OK) {
+		//	error(1, "decompression init failure");
+		//	return 0;
+		//}
 
 		for(readBlk=blockInfo;readBlk!=currBlockInfo;readBlk++)
 		{
-			#define BUFFER_RATIO	255
+			#define BUFFER_RATIO	80
 			char *extractBuffer = (char*)malloc((*readBlk)->size * BUFFER_RATIO);
 			char *buf = (char*) malloc((*readBlk)->size);
 			unsigned out_len = 0;
@@ -99,13 +99,14 @@ int main(int argc, char **argv)
 				buf, extractBuffer, (*readBlk)->size, (*readBlk)->size * BUFFER_RATIO);
 				
 				printf("LZ4_decompress_safe(buf, exbuf, readSize=%d, max) out=%d\n", (*readBlk)->size, decBytes);
-				if(decBytes < 0)
+				/*if(decBytes < 0)
 				{
 					decBytes+=(*readBlk)->size;
+					//memcpy(extractBuffer, buf, (*readBlk)->size);
+				}*/
+				if(decBytes <= 0) {
+					break;
 				}
-				//if(decBytes <= 0) {
-				//	break;
-				//}
 				out_len = decBytes;
 				//printf("lzo1z_decompress(buf(%x), (*readBlk)->size=%d, extractBuffer(%x), ", buf, (*readBlk)->size, extractBuffer);
 				//out_len = LZ4_decompress_safe(buf, extractBuffer, (*readBlk)->size, 0xffff);

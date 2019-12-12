@@ -105,6 +105,7 @@ int main(int argc, char **argv)
 					//memcpy(extractBuffer, buf, (*readBlk)->size);
 				}*/
 				if(decBytes <= 0) {
+					printf("End at offset 0x%x\n",  (unsigned int)(*readBlk)->offset);
 					break;
 				}
 				out_len = decBytes;

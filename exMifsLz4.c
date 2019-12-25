@@ -107,15 +107,16 @@ int main(int argc, char **argv)
 				buf, extractBuffer, (*readBlk)->size, BUFFER_MAX/*(*readBlk)->size * BUFFER_RATIO*/);
 				
 				printf("LZ4_decompress_safe(buf, exbuf, readSize=%d(0x%x), max) out=%d\n", (*readBlk)->size, (*readBlk)->size, decBytes);
-				/*if(decBytes < 0)
+				if(decBytes < 0)
 				{
-					decBytes+=(*readBlk)->size;
-					memcpy(extractBuffer, buf, (*readBlk)->size);
-				}*/
-				if(decBytes < 0) {
 					printf("Error at offset 0x%x\n",  (unsigned int)(*readBlk)->offset);
-					break;
+					decBytes=BUFFER_MAX;//(*readBlk)->size;
+					//memcpy(extractBuffer, buf, BUFFER_MAX/*(*readBlk)->size*/);
 				}
+				//if(decBytes < 0) {
+				//	printf("Error at offset 0x%x\n",  (unsigned int)(*readBlk)->offset);
+				//	break;
+				//}
 				out_len = decBytes;
 				//printf("lzo1z_decompress(buf(%x), (*readBlk)->size=%d, extractBuffer(%x), ", buf, (*readBlk)->size, extractBuffer);
 				//out_len = LZ4_decompress_safe(buf, extractBuffer, (*readBlk)->size, 0xffff);

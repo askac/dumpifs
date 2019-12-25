@@ -9,9 +9,9 @@ fixencifs=`dirname $0`/fixencifs
 tempBody=__temp__B
 tempBody2=__temp__B2
 
-if [ $# -ne 3 ];then
+if [ $# -lt 3 ];then
 cat << EOF
-Usage: $0 <head offset(dec)> <decompressed.ifs> <destination ifs>
+Usage: $0 <head offset(dec)> <decompressed.ifs> <destination ifs> [format: ucl|lzo]
 head offset could be found when dump a ifs file.
 EOF
 exit
@@ -41,6 +41,17 @@ echo "Destination file $dstIfs exist!"
 exit
 fi
 
+
+if [ "x$4" = "xucl" ]
+then
+packuse=1
+echo "Pack using ucl"
+elif [ "x$4" = "xlzo" ]
+then
+packuse=2
+echo "Pack using lzo"
+else
+
 cat << EOF
 Compress method?
 1. ucl
@@ -48,10 +59,14 @@ Compress method?
 EOF
 
 read packuse
+
+fi
+
 if [ "$packuse" -lt 1 -o "$packuse" -gt 2 ];then
 	echo "Invalid option $packuse"
 	exit
 fi
+
 
 if [ $packuse -eq 1 ];then
 	compressUse=$ucltool

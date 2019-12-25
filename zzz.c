@@ -19,22 +19,38 @@ int main(int ac, char**av)
 		unsigned int	 total_in_len = 0, total_out_len=0;
 		int			status;
 		unsigned char	work[LZO1X_999_MEM_COMPRESS];
-		#define BUFFSIZE_LZO 0x10000
+		#define BUFFSIZE_LZO 65536L //0x10000
 		unsigned char					buf[BUFFSIZE_LZO];
 		unsigned char 				out_buf[BUFFSIZE_LZO+(BUFFSIZE_LZO/64 + 16 + 3)];
 		
 		for(;;) {
+			int backCount=0;
 			unsigned char packSize[2];
+			printf("Read offset=%ld\n", ftell(fpr));
 			len = fread(buf, 1, sizeof(buf), fpr);
 			total_in_len += len;
 			lzo_init();
 			if(0 < len) {
+retry:
 				printf("buf[0-4] = %02X %02X %02X %02X, Package %d bytes \n", buf[0], buf[1], buf[2], buf[3], len);
 				//status = ucl_nrv2b_99_compress(buf, len, out_buf, &out_len, NULL, 9, NULL, NULL);//= ucl_nrv2b_decompress_8(buf, len, out_buf, &out_len, NULL);
 				status = lzo1x_999_compress(buf, len, out_buf, &out_len, work);
 				if(status != 0) {
 					error(1, 0, "compression failure.\n");
 					break;
+				}
+				if(out_len > 0xffff) {
+					printf("!!!! Packed size too big! Need retry!\n");
+					printf("Read offset now=%ld\n", ftell(fpr));
+					backCount++;
+					fseek(fpr, -BUFFSIZE_LZO, SEEK_CUR);
+					fseek(fpr, 4096 * (backCount - 1), SEEK_CUR);
+					total_in_len -= len;
+					printf("Read offset adjusted=%ld\n", ftell(fpr));
+					len = fread(buf, 1, sizeof(buf) - 4096 * backCount, fpr);
+                                        total_in_len += len;
+                                        lzo_init(); 
+					goto retry;
 				}
 				packSize[0] = (out_len >> 8) & 0xff;
 				packSize[1] = out_len & 0xff;

@@ -35,8 +35,11 @@
           Note: this may not be supported in the future.
 #endif
 
-//#include <lib/compat.h>
+#ifdef QNX
+#include <lib/compat.h>
+#else
 #include "sys/compat.h"
+#endif
 
 #ifdef _NTO_HDR_DIR_
 #define _PLATFORM(x) x
@@ -55,14 +58,23 @@
 #include <utime.h>
 #include <sys/stat.h>
 
+#ifdef QNX
+#include <sys/elf.h>
+#include <sys/image.h>
+#include <sys/startup.h>
+#else
 #include "sys/elf.h"
 #include "sys/startup.h"
 #include "sys/image.h"
-
+#endif
 #include <libgen.h>
 
 #include <zlib.h>
-#include <lzo/lzo1x.h>
+#ifdef QNX
+#include <lzo1x.h>
+#else
+#include <lzo/lzo1x.h> 
+#endif
 #include <ucl/ucl.h>
 
 //#include "xplatform.h"

@@ -1,5 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+
+//#ifdef QNX
+#include <stdarg.h>
+//#endif
+
 #include "sys/image.h"
 #include "sys/startup.h"
 

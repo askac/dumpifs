@@ -91,7 +91,7 @@ int main(int argc, char **argv)
 			{
 				//printf("lzo1z_decompress(buf(%x), (*readBlk)->size=%d, extractBuffer(%x), ", buf, (*readBlk)->size, extractBuffer);
 				lzo1z_decompress(buf, (*readBlk)->size, extractBuffer, &out_len, NULL);
-				//printf("out_len=%d, NULL);\n", out_len);
+				printf("out_len=%d, NULL);\n", out_len);
 				fwrite(extractBuffer, 1, out_len, fpOut);
 			}
 			free(*readBlk);

@@ -994,7 +994,6 @@ int mkdir_p(const char *path)
 }
 
 void extract_file(FILE *fp, int ipos, struct image_file *ent) {
-	char			*name;
 	FILE			*dst;
 	struct utimbuf	buff;
 	struct extract_file *ef;
@@ -1003,7 +1002,14 @@ void extract_file(FILE *fp, int ipos, struct image_file *ent) {
 		return;
 	}
 
-	name = (flags & FLAG_BASENAME) ? basename(ent->path) : ent->path;
+	// Both dirname() and basename() may modify the contents of path, so we'll use copies
+	const size_t len = strlen(ent->path);
+	char ent_path_copy[len];
+	strncpy(ent_path_copy, ent->path, len);
+
+	char* name = (flags & FLAG_BASENAME) ? basename(ent_path_copy) : ent->path;
+	// Reset in case it was altered by basename()
+	strncpy(ent_path_copy, ent->path, len);
 
 	if ( extract_files != NULL ) {
 		for ( ef = extract_files; ef != NULL; ef = ef->next ) {
@@ -1018,12 +1024,14 @@ void extract_file(FILE *fp, int ipos, struct image_file *ent) {
 			processing_done = 1;
 		}
 	}
-/*
-	if(mkdir_p(dirname(ent->path))) {
+
+	if(mkdir_p(dirname(ent_path_copy))) {
 		printf("unable to mkdir -p for %s\n", name);
 		return;
 	}
-*/
+	// Reset because it was probably altered by dirname()
+	strncpy(ent_path_copy, ent->path, len);
+
 	if(!(dst = fopen(name, "wb"))) {
 		error(0, "Unable to open %s: %s\n", name, strerror(errno));
 	}
